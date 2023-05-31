@@ -11,7 +11,6 @@ from sklearn.model_selection import train_test_split #permite hacer una divisió
 if __name__ == '__main__':
     dt_heart=pd.read_csv('./data/heart.csv') #cargamos los datos
     #print(dt_heart.head(5)) #imprimimos los 5 primeros datos
-
     dt_features=dt_heart.drop(['target'],axis=1) #las featurus sin el target
     dt_target = dt_heart['target'] #obtenemos el target
     
@@ -25,7 +24,7 @@ if __name__ == '__main__':
     pca=PCA(n_components=3)
     # Esto para que nuestro PCA se ajuste a los datos de entrenamiento que tenemos como tal
     pca.fit(X_train)
-     #Como haremos una comparación con incremental PCA, haremos lo mismo para el IPCA.
+     #Como haremos una comparación con incremental PCA, haremos lo mismo para el IPCA.'''
     '''EL parámetro batch se usa para crear pequeños bloques, de esta forma podemos ir entrenandolos
     poco a poco y combinarlos en el resultado final'''
     ipca=IncrementalPCA(n_components=3,batch_size=10) #tamaño de bloques, no manda a entrear todos los datos
