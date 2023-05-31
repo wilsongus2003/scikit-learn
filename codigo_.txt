@@ -1,0 +1,828 @@
+-----exactitud de prediccion---------------
+acuracy
+import pandas as pd #importamos pandas
+import sklearn #biblioteca de aprendizaje automático
+import matplotlib.pyplot as plt #Librería especializada en la creación de gráficos
+from sklearn.decomposition import PCA #importamos algorimo PCA
+from sklearn.decomposition import IncrementalPCA #importamos algorimo PCA
+from sklearn.linear_model import LogisticRegression #clasificación y análisis predictivo 
+from sklearn.preprocessing import StandardScaler #Normalizar los datos
+from sklearn.model_selection import train_test_split #permite hacer una división de un conjunto de datos en dos bloques de entrenamiento y prueba de un modelo
+
+if __name__ == '__main__':
+    dt_heart=pd.read_csv('./data/heart.csv')
+    
+    #print(dt_heart.head(15)) #imprimimos los 5 primeros datos
+    
+    dt_features=dt_heart.drop(['target'],axis=1) #las featurus sin el target
+    dt_target = dt_heart['target'] #obtenemos el target
+
+    dt_features = StandardScaler().fit_transform(dt_features) #Normalizamnos los datos
+   
+    X_train,X_test,y_train,y_test =train_test_split(dt_features,dt_target,test_size=0.30,random_state=42)
+    print(X_train.shape) #consultar la forma de la tabla con pandas
+    print(y_train.shape)
+    '''EL número de componentes es opcional, ya que por defecto si no le pasamos el número de componentes lo asignará de esta forma:
+    a: n_components = min(n_muestras, n_features)'''
+    pca=PCA(n_components=4)
+    # Esto para que nuestro PCA se ajuste a los datos de entrenamiento que tenemos como tal
+    pca.fit(X_train)
+     #Como haremos una comparación con incremental PCA, haremos lo mismo para el IPCA.
+    '''EL parámetro batch se usa para crear pequeños bloques, de esta forma podemos ir entrenandolos
+    poco a poco y combinarlos en el resultado final'''
+    ipca=IncrementalPCA(n_components=3,batch_size=10) #tamaño de bloques, no manda a entrear todos los datos
+    #Esto para que nuestro PCA se ajuste a los datos de entrenamiento que tenemos como tal
+    ipca.fit(X_train)
+    ''' Aquí graficamos los números de 0 hasta la longitud de los componentes que me sugirió el PCA o que
+    me generó automáticamente el pca en el eje x, contra en el eje y, el valor de la importancia
+    en cada uno de estos componentes, así podremos identificar cuáles son realmente importantes
+    para nuestro modelo '''
+    plt.plot(range(len(pca.explained_variance_)),pca.explained_variance_ratio_) #gneera  desde 0 hasta los componentes
+    #plt.show()
+    #Ahora vamos a configurar nuestra regresión logística
+    logistic=LogisticRegression(solver='lbfgs')
+     # Configuramos los datos de entrenamiento
+    dt_train = pca.transform(X_train)#conjunto de entrenamiento
+    dt_test = pca.transform(X_test)#conjunto de prueba
+     # Mandamos los data frames la la regresión logística
+    logistic.fit(dt_train, y_train) #mandasmos a regresion logistica los dos datasets
+    #Calculamos nuestra exactitud de nuestra predicción
+    print("SCORE PCA: ", logistic.score(dt_test, y_test))
+    
+    #Configuramos los datos de entrenamiento
+    dt_train = ipca.transform(X_train)
+    dt_test = ipca.transform(X_test)
+    # Mandamos los data frames la la regresión logística
+    logistic.fit(dt_train, y_train)
+    #Calculamos nuestra exactitud de nuestra predicción
+    print("SCORE IPCA: ", logistic.score(dt_test, y_test))
+
+-------Comparación entre PCA e IPCA
+Es interesante ver cómo cambia la exactitud del modelo en función del número de componentes que se elijan tanto para el IPCA como para el PCA.
+
+import pandas as pd #importamos pandas
+import sklearn #biblioteca de aprendizaje automático
+import matplotlib.pyplot as plt #Librería especializada en la creación de gráficos
+from sklearn.decomposition import PCA #importamos algorimo PCA
+from sklearn.decomposition import IncrementalPCA #importamos algorimo PCA
+from sklearn.linear_model import LogisticRegression #clasificación y análisis predictivo 
+from sklearn.preprocessing import StandardScaler #Normalizar los datos
+from sklearn.model_selection import train_test_split #permite hacer una división de un conjunto de datos en dos bloques de entrenamiento y prueba de un modelo
+
+if __name__ == '__main__':
+    dt_heart=pd.read_csv('./data/heart.csv')
+    
+    #print(dt_heart.head(15)) #imprimimos los 5 primeros datos
+    
+    dt_features=dt_heart.drop(['target'],axis=1) #las featurus sin el target
+    dt_target = dt_heart['target'] #obtenemos el target
+
+    dt_features = StandardScaler().fit_transform(dt_features) #Normalizamnos los datos
+   
+    X_train,X_test,y_train,y_test =train_test_split(dt_features,dt_target,test_size=0.30,random_state=42)
+    #print(X_train.shape) #consultar la forma de la tabla con pandas
+    #print(y_train.shape)
+    '''EL número de componentes es opcional, ya que por defecto si no le pasamos el número de componentes lo asignará de esta forma:
+    a: n_components = min(n_muestras, n_features)'''
+    pca=PCA(n_components=3)
+    # Esto para que nuestro PCA se ajuste a los datos de entrenamiento que tenemos como tal
+    pca.fit(X_train)
+     #Como haremos una comparación con incremental PCA, haremos lo mismo para el IPCA.
+    '''EL parámetro batch se usa para crear pequeños bloques, de esta forma podemos ir entrenandolos
+    poco a poco y combinarlos en el resultado final'''
+    ipca=IncrementalPCA(n_components=3,batch_size=10) #tamaño de bloques, no manda a entrear todos los datos
+    #Esto para que nuestro PCA se ajuste a los datos de entrenamiento que tenemos como tal
+    ipca.fit(X_train)
+    ''' Aquí graficamos los números de 0 hasta la longitud de los componentes que me sugirió el PCA o que
+    me generó automáticamente el pca en el eje x, contra en el eje y, el valor de la importancia
+    en cada uno de estos componentes, así podremos identificar cuáles son realmente importantes
+    para nuestro modelo '''
+    #plt.plot(range(len(pca.explained_variance_)),pca.explained_variance_ratio_) #gneera  desde 0 hasta los componentes
+    #plt.show()
+    #Ahora vamos a configurar nuestra regresión logística
+    logistic = LogisticRegression(solver='lbfgs')
+
+    pca_data = {'accuracy': [],
+                'n_components': []}
+    ipca_data = {'accuracy': [],
+                'n_components': []}
+    # PCA
+    for n in range(2, 10):
+        pca = PCA(n_components=n)
+        pca.fit(X_train)
+        df_train = pca.transform(X_train)
+        df_test = pca.transform(X_test)
+        logistic.fit(df_train, y_train)
+        acccuracy = logistic.score(df_test, y_test)
+        
+        pca_data['accuracy'].append(acccuracy)
+        pca_data['n_components'].append(n)
+    
+    # IPC
+    for n in range(2, 10):
+        ipca = IncrementalPCA(n_components=n, batch_size=10)
+        ipca.fit(X_train)
+        df_train = ipca.transform(X_train)
+        df_test = ipca.transform(X_test)
+        logistic.fit(df_train, y_train)
+        acccuracy = logistic.score(df_test, y_test)
+        
+        ipca_data['accuracy'].append(acccuracy)
+        ipca_data['n_components'].append(n)
+    
+    
+    plt.plot(pca_data['n_components'], pca_data['accuracy'], label='PCA')
+    plt.plot(ipca_data['n_components'], ipca_data['accuracy'], label='IPCA')
+    plt.title('N Components vs Accuracy - PCA vs IPCA')
+    plt.xlabel('Number of Components')
+    plt.ylabel('Accuracy of Logistic-Regression')
+    plt.legend()
+    plt.show()
+---------------------------------
+Ahora que ya sabemos para el algoritmo de PCA, ¿que otras alternativas tenemos?
+
+Bueno, una alternativa son los Kernels. Un Kernel es una función matemática que toma mediciones que se comportan de manera no lineal y las proyecta en un espacio dimensional más grande en donde sen linealmente separables.
+
+Y, ¿esto para que puede servir?
+
+1.PNG
+Sirve para casos en donde no son linealmente separables. El la primera imagen no es posible separarlos con una linea y en la imagen 2 si lo podemos hacer mediante Kernels. Lo que hace la función de Kernels es proyectar los puntos en otra dimensión y así volver los datos linealmente separables.
+
+¿Que tipo de funciones para Kernels nos podemos encontrar?
+
+2.PNG
+Ejemplos de funciones de Kernels en datasets aplicados a un clasificador:
+
+3.PNG
+-------------kernel--
+El texto trata sobre el concepto de Kernel y su aplicación en la clasificación de datos complejos a través de funciones matemáticas útiles. Se menciona que el Kernel es una función matemática que nos ayuda a proyectar datos de una dimensión determinada a dimensiones más altas, lo que permite clasificar datos que no son linealmente separables. Se mencionan algunas opciones de los Kernels más comunes, como los Kernels lineales y los Kernels polinómicos. Se explica que la estrategia del Kernel resulta computacionalmente eficiente y puede llevar a resultados muy buenos en la clasificación de datos complejos. Se presenta un ejemplo de implementación de Kernel en Python para la clasificación de pacientes con problemas cardíacos.
+......Kernel y kpca....
+comparativa de los tres kernel
+import pandas as pd #importamos pandas
+import sklearn #biblioteca de aprendizaje automático
+import matplotlib.pyplot as plt #Librería especializada en la creación de gráficos
+
+from sklearn.decomposition import KernelPCA #importamos algorimo PCA
+from sklearn.decomposition import IncrementalPCA #importamos algorimo PCA
+from sklearn.linear_model import LogisticRegression #clasificación y análisis predictivo 
+from sklearn.preprocessing import StandardScaler #Normalizar los datos
+from sklearn.model_selection import train_test_split #permite hacer una división de un conjunto de datos en dos bloques de entrenamiento y prueba de un modelo
+
+if __name__ == "__main__":
+ # Cargamos los datos del dataframe de pandas
+ dt_heart=pd.read_csv('./data/heart.csv')
+ # Imprimimos un encabezado con los primeros 5 registros
+ print(dt_heart.head(5))
+ # Guardamos nuestro dataset sin la columna de target
+ dt_features = dt_heart.drop(['target'], axis=1)
+ # Este será nuestro dataset, pero sin la columna
+ dt_target = dt_heart['target']
+ # Normalizamos los datos
+ dt_features = StandardScaler().fit_transform(dt_features)
+  # Partimos el conjunto de entrenamiento y para añadir replicabilidad usamos el random state
+ X_train, X_test, y_train, y_test = train_test_split(dt_features, dt_target, test_size=0.3, random_state=42)
+ 
+ kernel = ['linear','poly','rbf']
+ #Aplicamos la función de kernel de tipo polinomial
+ for k in kernel:
+        kpca = KernelPCA(n_components=4, kernel = k)
+        #kpca = KernelPCA(n_components=4, kernel='poly' )
+        #Vamos a ajustar los datos
+        kpca.fit(X_train)
+        
+        #Aplicamos el algoritmo a nuestros datos de prueba y de entrenamiento
+        dt_train = kpca.transform(X_train)
+        dt_test = kpca.transform(X_test)
+        
+        #Aplicamos la regresión logística un vez que reducimos su dimensionalidad
+        logistic = LogisticRegression(solver='lbfgs')
+        
+        #Entrenamos los datos
+        logistic.fit(dt_train, y_train)
+        
+        #Imprimimos los resultados
+        print("SCORE KPCA " + k + " : ", logistic.score(dt_test, y_test))
+ ------------------------------------
+¿Qué es la regularización y cómo aplicarla?
+En esta clase se habla de la técnica de regularización, que es utilizada para reducir la complejidad del modelo y mejorar su generalización en escenarios de ver feeding. Se introduce un poco de sesgo para reducir la varianza de los datos y se necesita un término adicional, la pérdida, para aplicar la regularización. Se explican los tres tipos de regularización: L1, L2 y Elastic Net, que se utilizan para eliminar o penalizar las variables que son irrelevantes para el modelo. También se mencionan los conceptos de pérdida y optimización para trabajar con modelos lineales como la regresión lineal a través del método de los mínimos cuadrados.
+---------regularizacion data felicidad--------------
+linear,lasso,ridge
+# Importamos las bibliotecas
+import pandas as pd
+import sklearn
+
+# Importamos los modelos de sklearn 
+from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import Lasso
+from sklearn.linear_model import Ridge
+
+# Importamos las metricas de entrenamiento y el error medio cuadrado
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+
+if __name__ == "__main__":
+    
+    # Importamos el dataset del 2017 
+    dataset = pd.read_csv('./data/felicidad.csv')
+    # Mostramos el reporte estadistico
+    print(dataset.describe())
+
+    # Vamos a elegir los features que vamos a usar
+    X = dataset[['gdp', 'family', 'lifexp', 'freedom' , 'corruption' , 'generosity', 'dystopia']]
+    # Definimos nuestro objetivo, que sera nuestro data set, pero solo en la columna score 
+    y = dataset[['score']]
+
+    # Imprimimos los conjutos que creamos 
+    # En nuestros features tendremos definidos 155 registros, uno por cada pais, 7 colunas 1 por cada pais 
+    print(X.shape)
+    # Y 155 para nuestra columna para nuestro target 
+    print(y.shape)
+
+    # Aquí vamos a partir nuestro entrenaminto en training y test, no hay olvidar el orden
+    # Con el test size elejimos nuestro porcetaje de datos para training 
+    X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=0.25)
+
+    # Aquí definimos nuestros regresores uno por 1 y llamamos el fit o ajuste 
+    modelLinear = LinearRegression().fit(X_train, y_train)
+    # Vamos calcular la prediccion que nos bota con la funcion predict con la regresion lineal 
+    # y le vamos a mandar el test 
+    y_predict_linear = modelLinear.predict(X_test)
+
+    # Configuramos alpha, que es valor labda y entre mas valor tenga alpha en lasso mas penalizacion 
+    # vamos a tener y lo entrenamos con la función fit 
+    modelLasso = Lasso(alpha=0.2).fit(X_train, y_train)
+    # Hacemos una prediccion para ver si es mejor o peor de lo que teniamos en el modelo lineal sobre
+    # exactamente los mismos datos que teníamos anteriormente 
+    y_predict_lasso = modelLasso.predict(X_test)
+
+    # Hacemos la misma predicción, pero para nuestra regresion ridge 
+    modelRidge = Ridge(alpha=1).fit(X_train, y_train)
+    # Calculamos el valor predicho para nuestra regresión ridge 
+    y_predict_ridge = modelRidge.predict(X_test)
+
+    # Calculamos la perdida para cada uno de los modelos que entrenamos, empezaremos con nuestro modelo 
+    # lineal, con el error medio cuadratico y lo vamos a aplicar con los datos de prueba con la prediccion 
+    # que hicimos 
+    linear_loss = mean_squared_error(y_test, y_predict_linear)
+    # Mostramos la perdida lineal con la variable que acabamos de calcular
+    
+    print( "Linear Loss. "+"%.10f" % float(linear_loss))
+    # Mostramos nuestra perdida Lasso, con la variable lasso loss 
+    lasso_loss = mean_squared_error(y_test, y_predict_lasso)
+    print("Lasso Loss. "+"%.10f" % float( lasso_loss))
+
+    # Mostramos nuestra perdida de Ridge con la variable lasso loss 
+    ridge_loss = mean_squared_error(y_test, y_predict_ridge)
+    print("Ridge loss: "+"%.10f" % float(ridge_loss))
+
+    # Imprimimos las coficientes para ver como afecta a cada una de las regresiones 
+    # La lines "="*32 lo unico que hara es repetirme si simbolo de igual 32 veces 
+    print("="*32)
+    print("Coeficientes linear: ")
+    # Esta informacion la podemos encontrar en la variable coef_ 
+    print(modelLinear.coef_)
+
+    print("="*32)
+    print("Coeficientes lasso: ")
+    # Esta informacion la podemos encontrar en la variable coef_ 
+    print(modelLasso.coef_)
+
+    # Hacemos lo mismo con ridge 
+    print("="*32)
+    print("Coeficientes ridge:")
+    print(modelRidge.coef_) 
+    #Calculamos nuestra exactitud de nuestra predicción lineal
+    print("="*32)
+    print("Score Lineal",modelLinear.score(X_test,y_test))
+    #Calculamos nuestra exactitud de nuestra predicción Lasso
+    print("="*32)
+    print("Score Lasso",modelLasso.score(X_test,y_test))
+     #Calculamos nuestra exactitud de nuestra predicción Ridge
+    print("="*32)
+    print("Score Ridge",modelRidge.score(X_test,y_test)) 
+-------------ElasticNet---------------
+
+El ElasticNet es una técnica intermedia de regularización que combina las dos técnicas previas de regularización, Lasso y Ridge, en una sola función. Al incluir un parámetro adicional, 𝛂, que varía entre 0 y 1, nos permite seleccionar cualquier combinación de L1 y L2. De esta manera, se superan las limitaciones de ambas técnicas y se puede probar ambas al mismo tiempo sin perder información.
+ElasticNet puede ser una buena opción si no se tiene suficiente experiencia o conocimiento matemático para elegir entre Lasso y Ridge, ya que ofrece una variedad de combinaciones lineales de ambas.
+Para implementar ElasticNet en Python, se puede usar el módulo linear_model de la biblioteca Scikit-learn. El primer paso es importar la clase ElasticNet, luego se inicializa un objeto ElasticNet y se entrena el modelo usando la función fit().
+-----------------------Elastic net---------------
+# Importamos las bibliotecas
+import pandas as pd
+import sklearn
+
+# Importamos los modelos de sklearn 
+from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import Lasso
+from sklearn.linear_model import Ridge
+from sklearn.linear_model import ElasticNet
+# Importamos las metricas de entrenamiento y el error medio cuadrado
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+
+if __name__ == "__main__":
+    
+    # Importamos el dataset del 2017 
+    dataset = pd.read_csv('./data/felicidad.csv')
+    # Mostramos el reporte estadistico
+    print(dataset.describe())
+
+    # Vamos a elegir los features que vamos a usar
+    X = dataset[['gdp', 'family', 'lifexp', 'freedom' , 'corruption' , 'generosity', 'dystopia']]
+    # Definimos nuestro objetivo, que sera nuestro data set, pero solo en la columna score 
+    y = dataset[['score']]
+
+    # Imprimimos los conjutos que creamos 
+    # En nuestros features tendremos definidos 155 registros, uno por cada pais, 7 colunas 1 por cada pais 
+    print(X.shape)
+    # Y 155 para nuestra columna para nuestro target 
+    print(y.shape)
+
+    # Aquí vamos a partir nuestro entrenaminto en training y test, no hay olvidar el orden
+    # Con el test size elejimos nuestro porcetaje de datos para training 
+    X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=0.25)
+
+    # Aquí definimos nuestros regresores uno por 1 y llamamos el fit o ajuste 
+    modelLinear = LinearRegression().fit(X_train, y_train)
+    # Vamos calcular la prediccion que nos bota con la funcion predict con la regresion lineal 
+    # y le vamos a mandar el test 
+    y_predict_linear = modelLinear.predict(X_test)
+
+    # Configuramos alpha, que es valor labda y entre mas valor tenga alpha en lasso mas penalizacion 
+    # vamos a tener y lo entrenamos con la función fit 
+    modelLasso = Lasso(alpha=0.2).fit(X_train, y_train)
+    # Hacemos una prediccion para ver si es mejor o peor de lo que teniamos en el modelo lineal sobre
+    # exactamente los mismos datos que teníamos anteriormente 
+    y_predict_lasso = modelLasso.predict(X_test)
+
+    # Hacemos la misma predicción, pero para nuestra regresion ridge 
+    modelRidge = Ridge(alpha=1).fit(X_train, y_train)
+    # Calculamos el valor predicho para nuestra regresión ridge 
+    y_predict_ridge = modelRidge.predict(X_test)
+    # Hacemos la misma predicción, pero para nuestra regresion ElasticNet 
+    modelElasticNet = ElasticNet(random_state=0).fit(X_train, y_train)
+    # Calculamos el valor predicho para nuestra regresión ElasticNet 
+    y_pred_elastic = modelElasticNet.predict(X_test)
+    # Calculamos la perdida para cada uno de los modelos que entrenamos, empezaremos con nuestro modelo 
+    # lineal, con el error medio cuadratico y lo vamos a aplicar con los datos de prueba con la prediccion 
+    # que hicimos 
+    linear_loss = mean_squared_error(y_test, y_predict_linear)
+    # Mostramos la perdida lineal con la variable que acabamos de calcular
+    print( "Linear Loss. "+"%.10f" % float(linear_loss))
+
+    # Mostramos nuestra perdida Lasso, con la variable lasso loss 
+    lasso_loss = mean_squared_error(y_test, y_predict_lasso)
+    print("Lasso Loss. "+"%.10f" % float( lasso_loss))
+
+    # Mostramos nuestra perdida de Ridge con la variable Ridge loss 
+    ridge_loss = mean_squared_error(y_test, y_predict_ridge)
+    print("Ridge loss: "+"%.10f" % float(ridge_loss))
+
+    # Mostramos nuestra perdida de ElasticNet con la variable Elastic loss
+    elastic_loss = mean_squared_error(y_test, y_pred_elastic)
+    print("ElasticNet Loss:  "+"%.10f" % float(elastic_loss))
+    # Imprimimos las coficientes para ver como afecta a cada una de las regresiones 
+    # La lines "="*32 lo unico que hara es repetirme si simbolo de igual 32 veces 
+    print("="*32)
+    print("Coeficientes linear: ")
+    # Esta informacion la podemos encontrar en la variable coef_ 
+    print(modelLinear.coef_)
+
+    print("="*32)
+    print("Coeficientes lasso: ")
+    # Esta informacion la podemos encontrar en la variable coef_ 
+    print(modelLasso.coef_)
+
+    # Hacemos lo mismo con ridge 
+    print("="*32)
+    print("Coeficientes ridge:")
+    print(modelRidge.coef_) 
+
+     # Hacemos lo mismo con elastic 
+    print("="*32)
+    print("Coeficientes elastic net:")
+    print(modelElasticNet.coef_) 
+
+    #Calculamos nuestra exactitud de nuestra predicción lineal
+    print("="*32)
+    print("Score Lineal",modelLinear.score(X_test,y_test))
+    #Calculamos nuestra exactitud de nuestra predicción Lasso
+    print("="*32)
+    print("Score Lasso",modelLasso.score(X_test,y_test))
+     #Calculamos nuestra exactitud de nuestra predicción Ridge
+    print("="*32)
+    print("Score Ridge",modelRidge.score(X_test,y_test))
+     #Calculamos nuestra exactitud de nuestra predicción Elastic Net
+    print("="*32)
+    print("Score Ridge",modelElasticNet.score(X_test,y_test))
+
+--------------valores atipicos----------------
+En este módulo se habla de cómo lidiar con valores atípicos en la preparación de datos para un modelo de aprendizaje automático. Un valor atípico se define como un dato que no se comporta como el patrón general de los demás datos. Los valores atípicos pueden ser problemáticos ya que pueden sesgar los modelos y generar errores al hacer predicciones con datos del mundo real.
+Existen dos métodos para identificar valores atípicos: el método estadístico y matemático, y el método gráfico. El método estadístico incluye el cálculo del Z score y la técnica de Klaus Terim. El método gráfico utiliza gráficas específicas llamadas boxplots para visualizar la distribución de los datos.
+Una vez que se identifican los valores atípicos, se pueden utilizar varias técnicas de preprocesamiento para tratarlos. Además, hay modelos de clasificación y regresión que automáticamente pueden lidiar con estos valores.
+Es importante identificar y tratar los valores atípicos en la preparación de datos para asegurar la precisión de los modelos de aprendizaje automático
+-------------regresion robusta-------------------------
+En esta clase se presenta un método para tratar con valores atípicos en modelos de aprendizaje automático. Aunque se pueden eliminar o transformar estos valores durante la etapa de preprocesamiento, a veces es necesario tratarlos directamente durante la aplicación del modelo. Para esto, se presentan dos técnicas de regresión robusta: RanSac y Huber. RanSac es un muestreo aleatorio de los datos, donde se selecciona una muestra de datos que se consideran no atípicos y se utilizan para entrenar el modelo. Huber, por otro lado, penaliza los valores atípicos durante el cálculo de la pérdida y los considera como tales si están por encima de un umbral llamado Epsilon. Se ha probado que el valor por defecto de Epsilon, 1.35, funciona eficazmente en el 95% de los casos. En la siguiente clase se implementará una regresión robusta para lidiar con datos corruptos en un conjunto de datos sobre la felicidad. Se recomienda explorar diferentes opciones para encontrar la mejor solución.
+--
+Ransac: selecciona una muestra aleatoria de los datos asumiendo que esa muestra se encuentra dentro de los valores inliners, con estos datos se entrena el modelo y se compara su comportamiento con respecto a los otros datos. Este procedimiento se repite tantas veces como se indique y al finalizar el algoritmo escoge la combinación de datos que tenga la mejor cantidad de inliners, donde los valores atípicos puedan ser discriminados de forma efectiva.
+Ejemplo:
+Huber Reggresor: no elimina los valores atípicos sino que los penaliza. Realiza el entrenamiento y si el error absoluto de la perdida alcanza cierto umbral (epsilon) los datos son tratados como atípicos. El valor por defecto de epsilon es 1.35 ya que se ha demostrado que logra un 95% de eficiencia estadística.
+------------robust.py-----------------------
+import pandas as pd
+import warnings
+
+from sklearn.linear_model import (
+    RANSACRegressor, HuberRegressor
+)
+from sklearn.svm import SVR
+
+from sklearn.model_selection import train_test_split
+from sklearn.metrics  import mean_squared_error
+
+if __name__ == "__main__":
+    dataset =  pd.read_csv('./data/felicidad_.csv')
+    print(dataset.head(5))
+
+    X = dataset.drop(['country', 'score'], axis=1)
+    y = dataset[['score']]
+
+    X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=0.3, random_state=42)
+
+    estimadores = {
+        'SVR' : SVR(gamma= 'auto', C=1.0, epsilon=0.1),
+        'RANSAC' : RANSACRegressor(),
+        'HUBER' : HuberRegressor(epsilon=1.35)
+    }
+    warnings.simplefilter("ignore")
+    for name, estimator in estimadores.items():
+        estimator.fit(X_train, y_train)
+        predictions = estimator.predict(X_test)
+        print("="*64)
+        print(name)
+        print("MSE: ", mean_squared_error(y_test, predictions))
+
+#implementacion_regresion_robusta
+---------------------------------------
+-----------ensamble-----------------------------
+El texto habla sobre los métodos de ensamble en el aprendizaje automático, los cuales consisten en combinar diferentes algoritmos o modelos para llegar a una respuesta consensuada y más precisa. Se mencionan dos estrategias principales: la primera es el método de votación, en el cual se entrena cada modelo en diferentes particiones de los datos y luego se toma la respuesta con mayor cantidad de votos. Se mencionan algunos métodos de ensamble reconocidos como el Random Forest. La segunda estrategia es el boosting, en la cual se entrena un clasificador débil varias veces con la retroalimentación del error de la predicción anterior, para fortalecer el modelo. El texto destaca que la diversidad es importante en estas técnicas y que han sido utilizadas con éxito en competiciones de aprendizaje automático.
+--bagging----------
+import pandas as pd 
+
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import BaggingClassifier
+
+from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
+from sklearn.svm import LinearSVC
+from sklearn.linear_model import SGDClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+
+import warnings
+warnings.filterwarnings("ignore")
+
+if __name__ == '__main__':
+    dt_heart = pd.read_csv('./data/heart.csv')
+    print(dt_heart['target'].describe())
+
+    x = dt_heart.drop(['target'], axis=1)
+    y = dt_heart['target']
+
+    X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.35, random_state=1)
+
+    knn_class = KNeighborsClassifier().fit(X_train, y_train)
+    knn_prediction = knn_class.predict(X_test)
+    print('='*64)
+    print('SCORE con KNN: ', accuracy_score(knn_prediction, y_test))
+
+    #bag_class = BaggingClassifier(base_estimator=KNeighborsClassifier(), n_estimators=50).fit(X_train, y_train) # base_estimator pide el estimador en el que va a estar basado nuestro metodo || n_estimators nos pide cuantos de estos modelos vamos a utilizar
+    #bag_pred = bag_class.predict(X_test)
+    #print('='*64)
+    #print(accuracy_score(bag_pred, y_test))
+
+    estimators = {
+        'LogisticRegression' : LogisticRegression(),
+        'SVC' : SVC(),
+        'LinearSVC' : LinearSVC(),
+        'SGD' : SGDClassifier(loss="hinge", penalty="l2", max_iter=5),
+        'KNN' : KNeighborsClassifier(),
+        'DecisionTreeClf' : DecisionTreeClassifier(),
+        'RandomTreeForest' : RandomForestClassifier(random_state=0)
+    }
+
+    for name, estimator in estimators.items():
+        bag_class = BaggingClassifier(base_estimator=estimator, n_estimators=50).fit(X_train, y_train)
+        bag_predict = bag_class.predict(X_test)
+        print('='*64)
+        print('SCORE Bagging with {} : {}'.format(name, accuracy_score(bag_predict, y_test)))
+------boosting----------
+
+import pandas as pd 
+
+from sklearn.ensemble import GradientBoostingClassifier
+
+from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
+from sklearn.svm import LinearSVC
+from sklearn.linear_model import SGDClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+
+import warnings
+warnings.filterwarnings("ignore")
+
+if __name__ == '__main__':
+    dt_heart = pd.read_csv('./data/heart.csv')
+    print(dt_heart['target'].describe())
+
+    x = dt_heart.drop(['target'], axis=1)
+    y = dt_heart['target']
+
+    X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.35, random_state=1)
+    
+    #boosting = GradientBoostingClassifier(loss='exponential',learning_rate=0.15, n_estimators=100, max_depth=5).fit(X_train, y_train)
+    #boosting_pred=boosting.predict(X_test)
+    #print('='*64)
+    #print(accuracy_score(boosting_pred, y_test))
+    
+    #obtenemos el mejor resultado junto con el estimador
+    estimators = range(1, 300, 1)
+    total_accuracy = []
+    best_result = {'result' : 0, 'n_estimator': 1}
+
+    for i in estimators:
+        boost = GradientBoostingClassifier(n_estimators=i).fit(X_train, y_train)
+        boost_pred = boost.predict(X_test)
+        new_accuracy = accuracy_score(boost_pred, y_test)
+        total_accuracy.append(new_accuracy)
+        if new_accuracy > best_result['result']: 
+            best_result['result'] = new_accuracy
+            best_result['n_estimator'] = i
+
+    print(best_result)
+----------------clusterizacion------------------
+En este texto se hace referencia a la importancia de abordar los problemas de aprendizaje no supervisado, donde no se tiene información previa sobre los datos y se busca descubrir patrones internos. Se menciona que las estrategias de Clustering (agrupamiento de datos) son muy importantes en este tipo de problemas, ya que permiten identificar patrones que no son visibles a simple vista y que pueden ser utilizados posteriormente en modelos de Machine Learning.
+Se presentan tres casos de aplicación de Clustering: cuando no se conocen las etiquetas para una clasificación de datos, cuando no se sabe nada sobre los datos y se quieren descubrir nuevos patrones, y cuando se quieren identificar valores atípicos.
+Se mencionan dos casos de uso para los algoritmos de Clustering: cuando se sabe cuántos grupos se quieren como resultado y cuando no se sabe y se quiere que el algoritmo determine el número óptimo de grupos. Se recomiendan algunos algoritmos específicos para cada caso.
+Finalmente, se menciona la implementación de estos problemas en código y se invita al lector a continuar en la siguiente clase para profundizar en el tema.
+--------------K-Means--------------------------------
+import pandas as pd
+import seaborn as sns
+from sklearn.cluster import MiniBatchKMeans
+
+if __name__ == "__main__":
+
+    dataset = pd.read_csv('./data/candy.csv')
+    print(dataset.head(10))
+
+    X = dataset.drop('competitorname', axis=1)
+    #Selecionamos 4 grupos
+    kmeans = MiniBatchKMeans(n_clusters=4, batch_size=8).fit(X)
+    print("Total de centros: " , len(kmeans.cluster_centers_))
+    print("="*64)
+    print(kmeans.predict(X))
+
+    dataset['group'] = kmeans.predict(X)
+    sns.pairplot(dataset, hue='group')
+    print(dataset)
+
+    #implementacion_k_means
+-----variables del dataset candy pareadas------
+import pandas as pd
+import seaborn as sns
+from sklearn.cluster import MiniBatchKMeans
+from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
+
+if __name__ == "__main__":
+
+    dataset = pd.read_csv('./data/candy.csv')
+    #print(dataset.head(10))
+
+    X = dataset.drop('competitorname', axis=1)
+    #Selecionamos 4 grupos
+    kmeans = MiniBatchKMeans(n_clusters=4, batch_size=8).fit(X)
+    print("Total de centros: " , len(kmeans.cluster_centers_))
+    print("="*64)
+    print(kmeans.predict(X))
+
+    dataset['group'] = kmeans.predict(X)
+    print(dataset)
+    penguins = sns.load_dataset("penguins")
+    sns.pairplot(dataset, hue='group')
+    plt.show()
+    #implementacion_k_means
+----------clustering puede generar los grupos que son imposibles de notar a simple vista.---
+import pandas as pd
+import seaborn as sns
+from sklearn.cluster import MiniBatchKMeans
+from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
+
+if __name__ == "__main__":
+
+    dataset = pd.read_csv('./data/candy.csv')
+    #print(dataset.head(10))
+
+    X = dataset.drop('competitorname', axis=1)
+    #Selecionamos 4 grupos
+    kmeans = MiniBatchKMeans(n_clusters=4, batch_size=8).fit(X)
+    print("Total de centros: " , len(kmeans.cluster_centers_))
+    print("="*64)
+    print(kmeans.predict(X))
+
+    dataset['group'] = kmeans.predict(X)
+    print(dataset)
+    sns.pairplot(dataset[['sugarpercent','pricepercent','winpercent','group']], hue = 'group')
+    plt.show()
+    #implementacion_k_means
+---------------Mean Shift-----------
+Este texto describe cómo utilizar la técnica de clustering, en particular la técnica Mean Shift, para clasificar datos en grupos. Se utiliza Python y la librería Pandas para cargar los datos y hacer el análisis. Primero, se carga el archivo de datos y se elimina la columna de nombres. Luego, se define una variable para guardar el modelo de clustering y se utiliza la configuración por defecto. Se imprime el resultado de los labels y se utiliza la función Max para determinar el número de grupos en los datos. Se imprime una línea de separación y se muestran los centros de cada grupo. Finalmente, se integra el resultado del clustering en la variable tags_edit para utilizarlo en otros modelos o exportarlo.
+-- codigo mean Shift-----------
+import pandas as pd
+from sklearn.cluster import MeanShift
+
+if __name__ == "__main__":
+
+    dataset = pd.read_csv("./data/candy.csv")
+    #print(dataset.head(5))
+
+    X = dataset.drop('competitorname', axis=1)
+
+    meanshift = MeanShift().fit(X)
+    print(max(meanshift.labels_))
+    print("="*64)
+    print(meanshift.cluster_centers_)
+
+    dataset['meanshift'] = meanshift.labels_
+    print("="*64)
+    print(dataset)
+
+    #implementacion_meanshift
+------------------------------------
+validacion de nuestro modelo Cross Validation
+-------
+El texto habla sobre la importancia de la validación de los modelos de Max Hilaire Vim. Se menciona que es crucial ser rigurosos a la hora de evaluar los resultados que se están recibiendo, y se compara el proceso de validación con el de un tester continuo de una aplicación. Además, se explica que todos los modelos son malos, pero algunos son útiles, y que nunca van a corresponder con la realidad al cien por ciento. Se presentan tres tipos de validación cruzada: home home, validación cruzada K-fold y validación cruzada leave-one-out. Finalmente, se indica cuándo es recomendable utilizar cada tipo de validación cruzada.
+---------Cross Validation-----------
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import cross_validate
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.svm import LinearSVC
+import matplotlib.pyplot as plt
+from sklearn.metrics import mean_squared_error
+
+from sklearn.model_selection import (
+    cross_val_score, KFold
+)
+
+def train_test_split_kf(data: np.array, target: np.array, train: np.array, test: np.array) -> np.array:
+    x_train = data[train]
+    x_test = data[test]
+    y_train = target[train]
+    y_test = target[test]
+    return x_train, x_test, y_train, y_test
+
+
+def evaluate_model(model, metric, x_train, x_test, y_train, y_test):
+    model.fit(x_train, y_train)
+    y_pred = model.predict(x_test)
+    score = metric(y_pred, y_test)
+    return score
+
+
+def main():
+    dataset = pd.read_csv("./data/felicidad.csv")
+
+    data = dataset.drop(["country", "score", "rank"], axis=1)
+    target = dataset["score"]
+    kf = KFold(n_splits=3, shuffle=True, random_state=42)
+
+    models = {"DecisionTreeRegressor": DecisionTreeRegressor()}
+    print('---- Easy Implementation ----')
+    for name, model in models.items():
+        score = cross_val_score(model, data, target, cv=4, scoring='neg_mean_squared_error')
+        print("Scores:", score)
+        print("Mean score: ", np.abs(np.mean(score)))
+        
+
+    print("=" * 64)
+    scores = []
+    print('---- Full Implementation ----')
+    for name, model in models.items():
+        print(f"I'm evaluating: {name}")
+        for n_fold, (train, test) in enumerate(kf.split(data)):
+            print(f"\t-I'm running fold {n_fold + 1}")
+            x_train, x_test, y_train, y_test = train_test_split_kf(data.values, target.values, train, test)
+            score = evaluate_model(model, mean_squared_error, x_train, x_test, y_train, y_test)
+            print("\t\t-score:", score)
+            scores.append(score)
+        print("="*64)
+        print("Scores:", scores)
+        print("Mean score: ", np.mean(scores))
+       
+
+if __name__ == '__main__':
+    main()
+------cross. 2--------------
+import pandas as pd
+import numpy as np
+
+from sklearn.metrics import mean_squared_error
+
+from sklearn.tree import DecisionTreeRegressor
+
+from sklearn.model_selection import (
+cross_val_score, KFold
+)
+
+dataset = pd.read_csv('./data/felicidad.csv')
+X = dataset.drop(['country', 'score'], axis=1)
+y = dataset['score']
+
+print(dataset.shape)
+
+model = DecisionTreeRegressor()
+score = cross_val_score(model, X,y, cv=3, scoring='neg_mean_squared_error') # con cv podemos controlar el numOfFolds
+print(score)
+print(np.abs(np.mean(score)))
+
+kf = KFold(n_splits=3, shuffle=True, random_state=42)
+mse_values = []
+
+for train, test in kf.split(dataset):
+    print(train)
+    print(test)
+
+    X_train = X.iloc[train]
+    y_train = y.iloc[train]
+    X_test = X.iloc[test]
+    y_test = y.iloc[test]
+
+
+model = DecisionTreeRegressor().fit(X_train, y_train)
+predict = model.predict(X_test)
+mse_values.append(mean_squared_error(y_test, predict))
+
+print("Los tres MSE fueron: ", mse_values)
+print("El MSE promedio fue: ", np.mean(mse_values))
+-------------Optimización paramétrica+++++++++++++++++++
+El texto trata sobre la automatización de la selección y optimización de modelos de aprendizaje, utilizando el principio de validación cruzada. En primer lugar, se menciona que encontrar un modelo de aprendizaje que funcione puede llevar a la necesidad de encontrar la optimización de cada uno de los parámetros del modelo para obtener el mejor resultado posible. Sin embargo, la tarea de revisar la documentación y probar todas las combinaciones de parámetros puede ser tediosa y costosa computacionalmente.
+Se presentan tres soluciones: la búsqueda manual, la optimización sistemática de parámetros y la optimización por búsqueda aleatorizada. La búsqueda manual implica escoger el modelo y ajustar los números de los parámetros de forma individual, probando cada combinación hasta encontrar la adecuada según la métrica. La optimización sistemática de parámetros utiliza una grilla de parámetros, que se define como una matriz donde se definen los posibles rangos de cada parámetro a través de un diccionario. Por otro lado, la optimización por búsqueda aleatorizada utiliza la validación cruzada para probar diferentes combinaciones de parámetros.
+Finalmente, se explica cómo definir un diccionario para cada parámetro que se quiera probar y cómo Saiki Clear puede interpretar el diccionario y probar todas las combinaciones de manera organizada para devolver la mejor combinación que maximice o minimice la métrica de interés.
+++++++++++++++++Randomized+++++++++++++++
+import pandas as pd
+
+from sklearn.model_selection import RandomizedSearchCV
+from sklearn.ensemble import RandomForestRegressor
+
+if __name__ == "__main__":
+
+    dataset = pd.read_csv('./data/felicidad.csv')
+
+   # print(dataset)
+
+    X = dataset.drop(['country', 'rank', 'score'], axis=1)
+    y = dataset[['score']].squeeze()
+
+    reg = RandomForestRegressor()
+
+    parametros = {
+        'n_estimators' : range(4,16),
+        'criterion' : ['squared_error', 'absolute_error'],
+        'max_depth' : range(2,11)
+    }
+
+    rand_est = RandomizedSearchCV(reg, parametros , n_iter=10, cv=3, scoring='neg_mean_absolute_error').fit(X,y)
+
+    print(rand_est.best_estimator_)
+    print(rand_est.best_params_)
+    print(rand_est.predict(X.loc[[0]]))
++++++++++++++++++++arquitectura de código+++++++++++++++++++++++++
+El texto trata sobre la importancia de organizar los archivos en una estructura de carpetas para facilitar la gestión de un proyecto y su posterior salida a producción. Se mencionan varios archivos necesarios para la ejecución de un código modular y extensible, como el archivo "main.py" que define el flujo de ejecución y otros archivos que se encargan de tareas concretas, como "blog.py" para la carga de elementos y "utils.py" para métodos reutilizables. También se menciona la creación de una clase llamada "utilidades" que contendrá los métodos que se reutilizarán a lo largo del proceso y otra clase llamada "models" para la parte de machine learning. En resumen, se trata de una guía para crear una estructura de carpetas y archivos bien organizada que facilite la gestión de un proyecto de machine learning.
+---------codigo
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
