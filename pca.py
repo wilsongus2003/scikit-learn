@@ -9,14 +9,15 @@ from sklearn.model_selection import train_test_split #permite hacer una divisió
 #bloques de entrenamiento y prueba de un modelo
 
 if __name__ == '__main__':
-    dt_heart=pd.read_csv('./data/heart.csv')
-    
+    dt_heart=pd.read_csv('./data/heart.csv') #cargamos los datos
     #print(dt_heart.head(5)) #imprimimos los 5 primeros datos
-    
+
     dt_features=dt_heart.drop(['target'],axis=1) #las featurus sin el target
     dt_target = dt_heart['target'] #obtenemos el target
+    
     dt_features = StandardScaler().fit_transform(dt_features) #Normalizamnos los datos
-    X_train,X_test,y_train,y_test =train_test_split(dt_features,dt_target,test_size=0.30,random_state=42)
+    
+    X_train,X_test,y_train,y_test =train_test_split(dt_features,dt_target,test_size=0.30,random_state=42) #30% del conjunto de datos
     print(X_train.shape) #consultar la forma de la tabla con pandas
     print(y_train.shape)
     '''EL número de componentes es opcional, ya que por defecto si no le pasamos el número de componentes lo asignará de esta forma:
@@ -35,7 +36,7 @@ if __name__ == '__main__':
     en cada uno de estos componentes, así podremos identificar cuáles son realmente importantes
     para nuestro modelo '''
     plt.plot(range(len(pca.explained_variance_)),pca.explained_variance_ratio_) #gneera  desde 0 hasta los componentes
-    #plt.show()
+    plt.show()
     #Ahora vamos a configurar nuestra regresión logística
     logistic=LogisticRegression(solver='lbfgs')
      # Configuramos los datos de entrenamiento
